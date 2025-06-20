@@ -20,21 +20,40 @@ describe("anchor-restarter", () => {
   const amount = new BN(1000000000); // 1 SOL in lamports
 
   it("can deposit to the vault", async () => {
+    const initialBalance = await connection.getBalance(provider.wallet.publicKey);
+    console.log("Deposit Initial balance", initialBalance);
+
+    // 1. RPC method
+    // const depositTx = await program.methods
+    //   .deposit(amount)
+    //   .rpc();
+    // console.log("Deposit transaction signature", depositTx);
+      
+    // 2. Transaction method
     const depositTx = await program.methods
       .deposit(amount)
-      .rpc();
+      .transaction();
     
-    console.log("Deposit transaction signature", depositTx);
+    const depositTxSignature = await provider.sendAndConfirm(depositTx);
+    console.log("Deposit transaction signature", depositTxSignature);
+    
+    // 3. Instruction method
+
+
     
     // Verify the vault account was created with the correct balance
     const vaultAccount = await connection.getAccountInfo(vaultPDA);
     assert.isNotNull(vaultAccount, "Vault account should be created");
     assert.equal(vaultAccount.lamports, amount.toNumber(), "Vault should have the deposited amount");
+
+    console.log("Vault account balance", vaultAccount.lamports);
+    const finalBalance = await connection.getBalance(provider.wallet.publicKey);
+    console.log("Deposit Final balance", finalBalance);
   });
 
   it("can withdraw from the vault", async () => {
     const initialBalance = await connection.getBalance(provider.wallet.publicKey);
-    
+    console.log("Withdraw Initial balance", initialBalance);    
     const withdrawTx = await program.methods
       .withdraw()
       .rpc();
@@ -47,6 +66,7 @@ describe("anchor-restarter", () => {
     
     // Verify the wallet received the funds back (minus transaction fees)
     const finalBalance = await connection.getBalance(provider.wallet.publicKey);
+    console.log("Withdraw Final balance", finalBalance);
     assert.isAbove(
       finalBalance,
       initialBalance - amount.toNumber(),
