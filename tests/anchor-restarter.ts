@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program, BN } from "@coral-xyz/anchor";
+import { TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 import { AnchorRestarter } from "../target/types/anchor_restarter";
 import { assert } from "chai";
 
@@ -30,16 +31,34 @@ describe("anchor-restarter", () => {
     // console.log("Deposit transaction signature", depositTx);
       
     // 2. Transaction method
-    const depositTx = await program.methods
-      .deposit(amount)
-      .transaction();
+    // const depositTx = await program.methods
+    //   .deposit(amount)
+    //   .transaction();
     
-    const depositTxSignature = await provider.sendAndConfirm(depositTx);
-    console.log("Deposit transaction signature", depositTxSignature);
+    // const depositTxSignature = await provider.sendAndConfirm(depositTx);
+    // console.log("Deposit transaction signature", depositTxSignature);
     
     // 3. Instruction method
+    const ix = await program.methods
+      .deposit(amount)
+      .instruction();
 
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    const messageV0 = new TransactionMessage({
+      payerKey: provider.wallet.publicKey,
+      recentBlockhash: blockhash,
+      instructions: [ix],
+    }).compileToV0Message(); 
 
+    const vtx = new VersionedTransaction(messageV0);
+    vtx.sign([provider.wallet.payer]);
+    
+    // const depositTxSignature = await provider.sendAndConfirm(vtx);
+    // console.log("Deposit transaction signature", depositTxSignature);
+
+    const sig = await connection.sendTransaction(vtx);
+    await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight });
+    console.log("Deposit transaction signature", sig);
     
     // Verify the vault account was created with the correct balance
     const vaultAccount = await connection.getAccountInfo(vaultPDA);
