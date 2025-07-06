@@ -12,7 +12,7 @@ anchor_restarter = "7CsExyLgAeZibmwb1r3jh2HrmkMEdqVi2knL52gofTPD"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [test]
